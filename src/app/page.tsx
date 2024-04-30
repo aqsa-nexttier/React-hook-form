@@ -1,113 +1,291 @@
-import Image from "next/image";
+"use client";
+import React from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Switch } from "../components/ui/switch";
+import { Label } from "../components/ui/label";
+import { z } from "zod";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const schema = z.object({
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (value) => {
+        if (value) {
+          // Check if the provided value is a valid phone number (assuming phone numbers are at least 10 digits)
+          return /^\d{10,}$/.test(value);
+        }
+        return true; // If the value is not provided, it passes validation
+      },
+      {
+        message: "Invalid phone number",
+      }
+    ),
+
+  name: z.string().regex(/^\S+ \S+$/, { message: "Enter your full name" }), // Assuming full name format: Firstname Lastname
+  email: z.string().email(),
+  password: z
+    .string()
+    .min(6, { message: "Must contain atleaset 6 character(s)" }),
+  mobile: z.string().min(10, { message: "Required" }), // Assuming mobile numbers are at least 10 digits
+  address: z.string().nonempty({ message: "Required" }),
+  city: z.string().nonempty({ message: "Required" }),
+  zipcode: z
+    .string()
+    .min(4, { message: "Must contain atleaset 4 character(s)" }),
+  state: z.string().nonempty({ message: "Required" }),
+  active: z.boolean(),
+  country: z.string().nonempty({ message: "Role is required" }),
+  role: z.string().nonempty({ message: "Role is required" }),
+});
+type FormFields = z.infer<typeof schema>;
 
 export default function Home() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormFields>({
+    // Default values
+    defaultValues: {
+      email: "test@email.com",
+    },
+    resolver: zodResolver(schema), // Connext schema to react-hoot-form using resolver
+  });
+
+  const onSubmit: SubmitHandler<FormFields> = async (data) => {
+    // For backend errors
+    try {
+      schema.parse(data);
+      console.log(data, "Data is valid");
+    } catch (error) {
+      console.error("Data is invalid:", errors);
+    }
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <div>
+      <h1 className="text-center text-2xl font-bold p-10">React Hook From</h1>
+      <div className="flex justfy-center items-center h-full w-full mt-16 md:mt-10">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className=" max-w-full md:max-w-[90vw] mx-auto p-16 rounded-lg drop-shadow bg-white dark:bg-background dark:border-[0.5px]"
+        >
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div>
+              <Label>Name*</Label>
+              <Input
+                {...register("name")}
+                name="name"
+                className="w-full"
+                type="text"
+                placeholder="John Smith"
+              />
+              {errors.name && (
+                <span className="text-red-500 text-xs">
+                  {errors.name.message}
+                </span>
+              )}
+            </div>
+            <div>
+              <Label>Email*</Label>
+              <Input
+                {...register("email")}
+                name="email"
+                className="w-full"
+                type="email"
+              />
+              {errors.email && (
+                <span className="text-red-500 text-xs">
+                  {errors.email.message}
+                </span>
+              )}
+            </div>
+            <div>
+              <Label>Password*</Label>
+              <Input
+                {...register("password")}
+                name="password"
+                className="w-full"
+                type="password"
+                placeholder="Enter Password"
+              />
+              {errors.password && (
+                <span className="text-red-500 text-xs">
+                  {errors.password.message}
+                </span>
+              )}
+            </div>
+            <div>
+              <Label>Role*</Label>
+              <Select defaultValue="">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent {...register("role", { required: true })}>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="agent">Agent</SelectItem>
+                  <SelectItem value="driver">Driver</SelectItem>
+                  <SelectItem value="affiliate">Affiliate</SelectItem>
+                  <SelectItem value="passenger">Passenger</SelectItem>
+                  {/* Add more SelectItems as needed */}
+                </SelectContent>
+              </Select>
+              {errors.role && (
+                <span className="text-red-500 text-xs">
+                  {errors.role.message}
+                </span>
+              )}
+            </div>
+            <div>
+              <Label>Phone #</Label>
+              <Input
+                {...register("phone")}
+                name="phone"
+                className="w-full"
+                type="tel"
+                placeholder="+123456789"
+              />
+              {errors.phone && (
+                <span className="text-red-500 text-xs">
+                  {errors.phone.message}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <Label>Mobile*</Label>
+              <Input
+                {...register("mobile")}
+                className="w-full"
+                name="mobile"
+                type="tel"
+                placeholder="+1 555-123-4567"
+              />
+              {errors.mobile && (
+                <span className="text-red-500 text-xs">
+                  {errors.mobile.message}
+                </span>
+              )}
+            </div>
+            <div>
+              <Label>Address*</Label>
+              <Input
+                {...register("address")}
+                className="w-full"
+                name="address"
+                type="text"
+                placeholder="123 Main Street"
+              />
+              {errors.address && (
+                <span className="text-red-500 text-xs">
+                  {errors.address.message}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <Label>City*</Label>
+              <Input
+                {...register("city")}
+                className="w-full"
+                name="city"
+                placeholder="Enter City"
+                type="text"
+              />
+              {errors.city && (
+                <span className="text-red-500 text-xs">
+                  {errors.city.message}
+                </span>
+              )}
+            </div>
+            <div>
+              <Label>Zipcode*</Label>
+              <Input
+                {...register("zipcode")}
+                className="w-full"
+                name="zipcode"
+                type="number"
+                placeholder="12345"
+              />
+              {errors.zipcode && (
+                <span className="text-red-500 text-xs">
+                  {errors.zipcode.message}
+                </span>
+              )}
+            </div>
+            <div>
+              <Label>State*</Label>
+              <Input
+                {...register("state")}
+                className="w-full"
+                name="state"
+                placeholder="Enter State"
+                type="text"
+              />
+              {errors.state && (
+                <span className="text-red-500 text-xs">
+                  {errors.state.message}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <Label>Country*</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent {...register("country", { required: true })}>
+                  <SelectItem value="Pakistan">Pakistan</SelectItem>
+                  <SelectItem value="India">India</SelectItem>
+                  <SelectItem value="America">America</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.country && (
+                <span className="text-red-500 text-xs">
+                  {errors.country.message}
+                </span>
+              )}
+            </div>
+
+            <div className="flex align-baseline items-center justify-center px-5 space-x-2 pt-[1.75rem]">
+              <Label htmlFor="Is-Active" className="text-xl">
+                Is Active
+              </Label>
+              <Switch {...register("active")} id="Is-Active" className="mt-1" />
+            </div>
+          </div>
+          <div className="mt-10 flex justify-center">
+            <div>
+              <Button
+                disabled={isSubmitting}
+                className="px-[7rem]"
+                type="submit"
+              >
+                {/* <Link
+                    href={{
+                      pathname: "/users/next",
+                    }}
+                  > */}
+                <span>{isSubmitting ? "Loading..." : "Submit"}</span>
+                {/* </Link> */}
+              </Button>
+            </div>
+          </div>
+        </form>
       </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
 }
