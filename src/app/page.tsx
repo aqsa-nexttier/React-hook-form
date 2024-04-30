@@ -14,7 +14,24 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
+export const roleOptions = [
+  "admin",
+  "manager",
+  "agent",
+  "driver",
+  "affiliate",
+  "passenger",
+] as const;
+export type RoleOptions = (typeof roleOptions)[number];
 
+export const mappedRoleOptions: { [key in RoleOptions]: string } = {
+  admin: "Admin",
+  manager: "Manager",
+  agent: "Agent",
+  driver: "Driver",
+  affiliate: "Affliate",
+  passenger: "PSassenger",
+};
 const schema = z.object({
   phone: z
     .string()
@@ -44,9 +61,11 @@ const schema = z.object({
     .string()
     .min(4, { message: "Must contain atleaset 4 character(s)" }),
   state: z.string().nonempty({ message: "Required" }),
-  active: z.boolean(),
-  country: z.string().nonempty({ message: "Role is required" }),
-  role: z.string().nonempty({ message: "Role is required" }),
+  active: z.boolean().default(true),
+  country: z.enum(["india", "pakistan", "america"]),
+  role: z.enum(roleOptions, {
+    errorMap: () => ({ message: "Please select a role" }),
+  }),
 });
 type FormFields = z.infer<typeof schema>;
 
@@ -67,12 +86,18 @@ export default function Home() {
     // For backend errors
     try {
       schema.parse(data);
-      console.log(data, "Data is valid");
+      console.log(schema.safeParse(data));
     } catch (error) {
       console.error("Data is invalid:", errors);
     }
   };
-
+  const roleOptions = Object.entries(mappedRoleOptions).map(
+    ([value, label]) => (
+      <SelectItem value={value} key={value}>
+        {label}
+      </SelectItem>
+    )
+  );
   return (
     <div>
       <h1 className="text-center text-2xl font-bold p-10">React Hook From</h1>
@@ -132,14 +157,11 @@ export default function Home() {
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
-                <SelectContent {...register("role", { required: true })}>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="agent">Agent</SelectItem>
-                  <SelectItem value="driver">Driver</SelectItem>
-                  <SelectItem value="affiliate">Affiliate</SelectItem>
-                  <SelectItem value="passenger">Passenger</SelectItem>
-                  {/* Add more SelectItems as needed */}
+                <SelectContent
+                  id="roleOptions"
+                  {...register("role", { required: true })}
+                >
+                  {roleOptions}
                 </SelectContent>
               </Select>
               {errors.role && (
@@ -248,9 +270,9 @@ export default function Home() {
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent {...register("country", { required: true })}>
-                  <SelectItem value="Pakistan">Pakistan</SelectItem>
-                  <SelectItem value="India">India</SelectItem>
-                  <SelectItem value="America">America</SelectItem>
+                  <SelectItem value="pakistan">Pakistan</SelectItem>
+                  <SelectItem value="india">India</SelectItem>
+                  <SelectItem value="america">America</SelectItem>
                 </SelectContent>
               </Select>
               {errors.country && (
